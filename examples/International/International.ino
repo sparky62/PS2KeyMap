@@ -94,82 +94,98 @@ uint8_t found;
 void setup()
 {
 Serial.begin( 115200 );
-Serial.println( "PS2KeyMap plus PS2KeyAdvanced Libraries" );
-Serial.println( "International Keyboard Test:" );
-Serial.print( "Default is US layout, type a key to change layout\n"
-                   " U for US     G for GB/UK\n" );
-Serial.println( " D for DE     F for FR\n"
-                   " I for IT     E for ES\n"
-                   " All keys on keyboard echoed here" );
+//Serial.println( "PS2KeyMap plus PS2KeyAdvanced Libraries" );
+//Serial.print( "Default is US layout, type a key to change layout\n"
+//                  " U for US     G for GB/UK\n" );
+//Serial.println( " D for DE     F for FR\n"
+//                   " I for IT     E for ES\n"
+ //                  " All keys on keyboard echoed here" );
 // Start keyboard setup while outputting
 keyboard.begin( DATAPIN, IRQPIN );
 // Disable Break codes (key release) from PS2KeyAdvanced
+keyboard.echo();
 keyboard.setNoBreak( 1 );
 // and set no repeat on CTRL, ALT, SHIFT, GUI while outputting
 keyboard.setNoRepeat( 1 );
+uint8_t map = keymap.selectMap( (char *)"US" );
+Serial.print("map ="); Serial.println(map);
 }
 
 
 void loop()
 {
-code = keyboard.available();
-if( code > 0 )
-  {
-  code = keyboard.read();
-  Serial.print( "Value " );
-  Serial.print( code, HEX );
-  code = keymap.remapKey( code );
+  code = keyboard.available();
+  
   if( code > 0 )
+  {
+    code = keyboard.read();
+    Serial.print( "Value 0x" );
+    Serial.print( code, HEX );
+    code = keymap.remapKey( code );
+    
+    if( code > 0 )
     {
-    if( ( code & 0xFF ) )
+      if( ( code & 0xFF ) )
       {
-      Serial.print( " mapped " );
-      Serial.print( code, HEX );
-      Serial.print( " - Status Bits " );
-      Serial.print( code >> 8, HEX );
-      Serial.print( "  Code " );
-      Serial.print( code & 0xFF, HEX );
-      Serial.print( "  ( " );
-      Serial.write( code & 0xFF );
-      Serial.print( " )\n" );
+        Serial.print( " mapped to 0x" );
+        Serial.print( code, HEX );
+        Serial.print( " - Status Bits 0b" );
+        Serial.print( code >> 8, BIN );
+        Serial.print( "  Code 0x" );
+        Serial.print( code & 0xFF, HEX );
+        Serial.print( "  ( " );
+
+        switch( code & 0xff )
+        {
+          case '\r':
+            Serial.print("\\r");
+            break;
+          default:
+            Serial.write( code & 0xFF );
+            break;
+        }
+      
+        Serial.println( " )" );
       }
-    // process special commands  
-    found = 0;
-    switch( code )
+      // process special commands  
+      found = 0;
+      switch( code )
       {
-      case 'D':
-      case 'd':
-              found = keymap.selectMap( (char *)"DE" );
-              break;
-      case 'F':
-      case 'f':
-              found = keymap.selectMap( (char *)"FR" );
-              break;
-      case 'E':
-      case 'e':
-              found = keymap.selectMap( (char *)"ES" );
-              break;
-      case 'I':
-      case 'i':
-              found = keymap.selectMap( (char *)"IT" );
-              break;
-      case 'G':
-      case 'g':
-              found = keymap.selectMap( (char *)"UK" );
-              break;
-      case 'u':
-      case 'U':
-              found = keymap.selectMap( (char *)"US" );
-              break;
+        case 'D':
+        case 'd':
+                found = keymap.selectMap( (char *)"DE" );
+                break;
+        case 'F':
+        case 'f':
+                found = keymap.selectMap( (char *)"FR" );
+                break;
+        case 'E':
+        case 'e':
+                found = keymap.selectMap( (char *)"ES" );
+                break;
+        case 'I':
+        case 'i':
+                found = keymap.selectMap( (char *)"IT" );
+                break;
+        case 'G':     
+        case 'g':
+                found = keymap.selectMap( (char *)"UK" );
+                break;
+        case 'u':
+        case 'U':
+                found = keymap.selectMap( (char *)"US" );
+                break;
       }
-    if( found )
+
+      if( found )
       {
-      Serial.print( "Keyboard set to " );
-      Serial.println( keymap.getMap( ) );
+        Serial.print( "Keyboard set to " );
+        Serial.println( keymap.getMap( ) );
       }
     }
-  else
-    Serial.println( " Keyboard protocol or function" );
+    else
+      Serial.println( " Keyboard protocol or function" );
   }
-delay( 100 );  
+  
+  delay( 100 );  
 }
